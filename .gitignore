@@ -1,0 +1,143 @@
+# Entornos virtuales de Python
+venv/
+
+# Environment variables
+.env
+
+# Byte-compiled / optimized / DLL files
+__pycache__/
+*.py[cod]
+*$py.class
+
+# C extensions
+*.so
+
+# Distribution / packaging
+.Python
+env/
+.env/
+.venv/
+ENV/
+env.bak/
+venv.bak/
+
+# Docker
+*.log
+docker-compose.override.yml
+
+# Logs
+logs
+*.log
+*.out
+
+# Unit test / coverage reports
+htmlcov/
+.tox/
+.nox/
+.coverage
+.coverage.*
+.cache
+nosetests.xml
+coverage.xml
+*.cover
+*.py,cover
+.hypothesis/
+.pytest_cache/
+cover/
+
+# Jupyter Notebook
+.ipynb_checkpoints
+
+# IPython
+profile_default/
+ipython_config.py
+
+# pyenv
+.python-version
+
+# pipenv
+Pipfile.lock
+
+# poetry
+poetry.lock
+
+# dotenv
+.env.local
+.env.*.local
+
+# mypy
+.mypy_cache/
+.dmypy.json
+dmypy.json
+
+# Pyre type checker
+.pyre/
+
+# pytype static type analyzer
+.pytype/
+
+# Cython debug symbols
+cython_debug/
+
+# Django stuff:
+*.log
+*.pot
+*.pyc
+
+# Data files
+*.csv
+*.json
+*.xlsx
+*.xls
+*.tsv
+*.sqlite3
+*.db
+*.sql
+
+# Temporary files
+*.tmp
+*.temp
+*.bak
+*.swp
+*.swo
+*~
+
+# IDE files
+.vscode/
+.idea/
+*.sublime-project
+*.sublime-workspace
+
+# OS generated files
+.DS_Store
+.DS_Store?
+._*
+.Spotlight-V100
+.Trashes
+ehthumbs.db
+Thumbs.db
+
+# Kafka/Zookeeper logs
+kafka-logs/
+zookeeper-logs/
+
+# MongoDB data
+mongo_data/
+
+# Grafana data
+grafana_data/
+
+# Node.js (for mongo-api)
+node_modules/
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+.npm
+.yarn-integrity
+
+# Docker volumes
+docker-volumes/
+
+# Local configuration
+config.local.*
+settings.local.*

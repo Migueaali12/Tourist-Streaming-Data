@@ -1,0 +1,12 @@
+apiVersion: 1
+
+providers:
+  - name: 'SerpAPI Tourism Analytics'
+    orgId: 1
+    folder: 'Tourism Analytics'
+    type: file
+    disableDeletion: false
+    updateIntervalSeconds: 10
+    allowUiUpdates: true
+    options:
+      path: /var/lib/grafana/dashboards 
