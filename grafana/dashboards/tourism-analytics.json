@@ -1,0 +1,171 @@
+{
+  "uid": "tourism-analytics",
+  "title": "Tourism Analytics",
+  "tags": ["tourism", "streaming", "serpapi"],
+  "timezone": "browser",
+  "schemaVersion": 39,
+  "version": 1,
+  "refresh": "30s",
+  "time": { "from": "now-24h", "to": "now" },
+  "templating": {
+    "list": [
+      {
+        "name": "country",
+        "label": "Country",
+        "type": "query",
+        "datasource": { "type": "yesoreyeram-infinity-datasource", "uid": "infinity-api" },
+        "includeAll": true,
+        "multi": true,
+        "current": { "selected": true, "text": "All", "value": "$__all" },
+        "query": {
+          "type": "json",
+          "source": "url",
+          "format": "table",
+          "url": "http://mongo-api:8080/distinct/search_results/country_code",
+          "root_selector": "",
+          "columns": [{ "selector": "", "text": "country_code", "type": "string" }]
+        }
+      }
+    ]
+  },
+  "panels": [
+    {
+      "id": 1,
+      "type": "stat",
+      "title": "Documents stored",
+      "gridPos": { "h": 6, "w": 5, "x": 0, "y": 0 },
+      "datasource": { "type": "yesoreyeram-infinity-datasource", "uid": "infinity-api" },
+      "targets": [
+        {
+          "refId": "A",
+          "type": "json",
+          "source": "url",
+          "format": "table",
+          "url": "http://mongo-api:8080/aggregate",
+          "url_options": {
+            "method": "POST",
+            "body_type": "raw",
+            "body_content_type": "application/json",
+            "data": "{\"collection\":\"search_results\",\"pipeline\":[{\"$match\":{\"country_code\":{\"$in\":[\"$country\"]}}},{\"$count\":\"total\"}]}"
+          },
+          "columns": [{ "selector": "total", "text": "total", "type": "number" }]
+        }
+      ],
+      "fieldConfig": { "defaults": { "unit": "short" }, "overrides": [] },
+      "options": { "reduceOptions": { "calcs": ["lastNotNull"] }, "colorMode": "value" }
+    },
+    {
+      "id": 2,
+      "type": "piechart",
+      "title": "Documents by country",
+      "gridPos": { "h": 6, "w": 7, "x": 5, "y": 0 },
+      "datasource": { "type": "yesoreyeram-infinity-datasource", "uid": "infinity-api" },
+      "targets": [
+        {
+          "refId": "A",
+          "type": "json",
+          "source": "url",
+          "format": "table",
+          "url": "http://mongo-api:8080/aggregate",
+          "url_options": {
+            "method": "POST",
+            "body_type": "raw",
+            "body_content_type": "application/json",
+            "data": "{\"collection\":\"search_results\",\"pipeline\":[{\"$group\":{\"_id\":\"$country_code\",\"count\":{\"$sum\":1}}},{\"$sort\":{\"count\":-1}}]}"
+          },
+          "columns": [
+            { "selector": "_id", "text": "country", "type": "string" },
+            { "selector": "count", "text": "count", "type": "number" }
+          ]
+        }
+      ],
+      "options": { "reduceOptions": { "calcs": ["lastNotNull"] }, "legend": { "displayMode": "list", "placement": "right" } }
+    },
+    {
+      "id": 3,
+      "type": "barchart",
+      "title": "Top keywords",
+      "gridPos": { "h": 9, "w": 12, "x": 12, "y": 0 },
+      "datasource": { "type": "yesoreyeram-infinity-datasource", "uid": "infinity-api" },
+      "targets": [
+        {
+          "refId": "A",
+          "type": "json",
+          "source": "url",
+          "format": "table",
+          "url": "http://mongo-api:8080/aggregate",
+          "url_options": {
+            "method": "POST",
+            "body_type": "raw",
+            "body_content_type": "application/json",
+            "data": "{\"collection\":\"search_results\",\"pipeline\":[{\"$match\":{\"country_code\":{\"$in\":[\"$country\"]}}},{\"$group\":{\"_id\":{\"keyword\":\"$search_metadata.search_keyword\",\"country\":\"$country_code\"},\"count\":{\"$sum\":1}}},{\"$sort\":{\"count\":-1}},{\"$limit\":15}]}"
+          },
+          "columns": [
+            { "selector": "_id.keyword", "text": "keyword", "type": "string" },
+            { "selector": "_id.country", "text": "country", "type": "string" },
+            { "selector": "count", "text": "count", "type": "number" }
+          ]
+        }
+      ],
+      "options": { "xField": "keyword", "orientation": "horizontal", "showValue": "auto", "legend": { "displayMode": "list", "placement": "bottom" } }
+    },
+    {
+      "id": 4,
+      "type": "table",
+      "title": "Top domains in the first results page",
+      "gridPos": { "h": 9, "w": 12, "x": 0, "y": 9 },
+      "datasource": { "type": "yesoreyeram-infinity-datasource", "uid": "infinity-api" },
+      "targets": [
+        {
+          "refId": "A",
+          "type": "json",
+          "source": "url",
+          "format": "table",
+          "url": "http://mongo-api:8080/aggregate",
+          "url_options": {
+            "method": "POST",
+            "body_type": "raw",
+            "body_content_type": "application/json",
+            "data": "{\"collection\":\"search_results\",\"pipeline\":[{\"$match\":{\"country_code\":{\"$in\":[\"$country\"]},\"position\":{\"$lte\":5}}},{\"$group\":{\"_id\":{\"domain\":\"$domain\",\"country\":\"$country_code\"},\"appearances\":{\"$sum\":1},\"avg_position\":{\"$avg\":\"$position\"}}},{\"$sort\":{\"appearances\":-1}},{\"$limit\":20}]}"
+          },
+          "columns": [
+            { "selector": "_id.domain", "text": "domain", "type": "string" },
+            { "selector": "_id.country", "text": "country", "type": "string" },
+            { "selector": "appearances", "text": "appearances", "type": "number" },
+            { "selector": "avg_position", "text": "avg_position", "type": "number" }
+          ]
+        }
+      ],
+      "options": { "showHeader": true }
+    },
+    {
+      "id": 5,
+      "type": "timeseries",
+      "title": "Searches per hour",
+      "gridPos": { "h": 9, "w": 12, "x": 12, "y": 9 },
+      "datasource": { "type": "yesoreyeram-infinity-datasource", "uid": "infinity-api" },
+      "targets": [
+        {
+          "refId": "A",
+          "type": "json",
+          "source": "url",
+          "format": "table",
+          "url": "http://mongo-api:8080/aggregate",
+          "url_options": {
+            "method": "POST",
+            "body_type": "raw",
+            "body_content_type": "application/json",
+            "data": "{\"collection\":\"search_results\",\"pipeline\":[{\"$match\":{\"country_code\":{\"$in\":[\"$country\"]}}},{\"$addFields\":{\"searched_at\":{\"$dateFromString\":{\"dateString\":\"$search_metadata.search_timestamp\"}}}},{\"$group\":{\"_id\":{\"hour\":{\"$dateTrunc\":{\"date\":\"$searched_at\",\"unit\":\"hour\"}},\"country\":\"$country_code\"},\"count\":{\"$sum\":1}}},{\"$sort\":{\"_id.hour\":1}}]}"
+          },
+          "columns": [
+            { "selector": "_id.hour", "text": "time", "type": "timestamp" },
+            { "selector": "_id.country", "text": "country", "type": "string" },
+            { "selector": "count", "text": "count", "type": "number" }
+          ]
+        }
+      ],
+      "fieldConfig": { "defaults": { "custom": { "drawStyle": "line", "fillOpacity": 10 } }, "overrides": [] },
+      "options": { "legend": { "displayMode": "list", "placement": "bottom" } }
+    }
+  ]
+}

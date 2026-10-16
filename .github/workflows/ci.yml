@@ -1,0 +1,54 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+jobs:
+  validate:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+
+      - name: Install API dependencies
+        working-directory: mongo-api
+        run: npm install --no-audit --no-fund
+
+      - name: Syntax check
+        working-directory: mongo-api
+        run: npm run check
+
+      - name: Unit tests (pipeline helpers)
+        working-directory: mongo-api
+        run: npm test
+
+      - name: Validate JSON and YAML files
+        run: |
+          python3 - <<'PY'
+          import json, pathlib, sys, yaml
+          skip = {'.git', 'node_modules', '.venv', 'venv'}
+          bad = []
+          for p in pathlib.Path('.').rglob('*'):
+              if skip & set(p.parts) or not p.is_file():
+                  continue
+              try:
+                  if p.suffix == '.json':
+                      json.loads(p.read_text())
+                  elif p.suffix in ('.yml', '.yaml'):
+                      yaml.safe_load(p.read_text())
+              except Exception as e:
+                  bad.append(f"{p}: {e}")
+          print("\n".join(bad) or "all JSON/YAML files valid")
+          sys.exit(1 if bad else 0)
+          PY
+
+      - name: Validate compose file
+        run: docker compose -f docker-compose.yml config -q
+
+      - name: Check shell script syntax
+        run: bash -n start-analytics-stack.sh
