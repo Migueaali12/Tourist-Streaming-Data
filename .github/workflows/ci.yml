@@ -31,9 +31,10 @@ jobs:
         run: |
           python3 - <<'PY'
           import json, pathlib, sys, yaml
+          skip = {'.git', 'node_modules', '.venv', 'venv'}
           bad = []
           for p in pathlib.Path('.').rglob('*'):
-              if '.git' in p.parts or not p.is_file():
+              if skip & set(p.parts) or not p.is_file():
                   continue
               try:
                   if p.suffix == '.json':
