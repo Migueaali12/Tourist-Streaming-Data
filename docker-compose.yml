@@ -1,11 +1,9 @@
 services:
   zookeeper:
-    image: bitnami/zookeeper:latest
+    image: bitnami/zookeeper:3.9
     container_name: my-zookeeper
     environment:
       - ALLOW_ANONYMOUS_LOGIN=yes
-    ports:
-      - "22181:2181"
     networks:
       - kafka-network
 
@@ -29,28 +27,32 @@ services:
       - kafka-network
 
   mongo:
-    image: mongo:latest
+    image: mongo:7
     container_name: my-mongo
     environment:
-      - MONGO_INITDB_ROOT_USERNAME=admin
-      - MONGO_INITDB_ROOT_PASSWORD=password123
+      - MONGO_INITDB_ROOT_USERNAME=${MONGO_ROOT_USER:-admin}
+      - MONGO_INITDB_ROOT_PASSWORD=${MONGO_ROOT_PASSWORD:-password123}
       - MONGO_INITDB_DATABASE=tourism_analytics
     ports:
       - "27017:27017"
     volumes:
       - mongo_data:/data/db
-      - ./mongo-init:/docker-entrypoint-initdb.d
+      - ./mongo-init:/docker-entrypoint-initdb.d:ro
+    healthcheck:
+      test: ["CMD", "mongosh", "--quiet", "--eval", "db.runCommand('ping').ok"]
+      interval: 10s
+      timeout: 5s
+      retries: 10
     networks:
       - kafka-network
 
-  # API intermedia para MongoDB
+  # Reads/writes MongoDB and exposes it as REST for Grafana.
   mongo-api:
     build:
       context: ./mongo-api
-      dockerfile: Dockerfile
     container_name: mongo-api
     environment:
-      - MONGO_URI=mongodb://admin:password123@mongo:27017/tourism_analytics?authSource=admin
+      - MONGO_URI=mongodb://${MONGO_ROOT_USER:-admin}:${MONGO_ROOT_PASSWORD:-password123}@mongo:27017/tourism_analytics?authSource=admin
       - DB_NAME=tourism_analytics
       - NODE_ENV=production
       - PORT=8080
@@ -58,25 +60,25 @@ services:
     ports:
       - "8080:8080"
     depends_on:
-      - mongo
+      mongo:
+        condition: service_healthy
     networks:
       - kafka-network
     restart: unless-stopped
 
   grafana:
-    image: grafana/grafana:latest
+    image: grafana/grafana:11.1.0
     container_name: my-grafana
     environment:
-      - GF_SECURITY_ADMIN_PASSWORD=admin123
-      - GF_INSTALL_PLUGINS=yesoreyeram-infinity-datasource,grafana-clock-panel,grafana-worldmap-panel,grafana-piechart-panel
-      - GF_FEATURE_TOGGLES_ENABLE=publicDashboards
+      - GF_SECURITY_ADMIN_PASSWORD=${GRAFANA_ADMIN_PASSWORD:-admin123}
+      - GF_INSTALL_PLUGINS=yesoreyeram-infinity-datasource
       - GF_DASHBOARDS_MIN_REFRESH_INTERVAL=1s
     ports:
       - "3000:3000"
     volumes:
       - grafana_data:/var/lib/grafana
-      - ./grafana/provisioning:/etc/grafana/provisioning
-      - ./grafana/dashboards:/var/lib/grafana/dashboards
+      - ./grafana/provisioning:/etc/grafana/provisioning:ro
+      - ./grafana/dashboards:/var/lib/grafana/dashboards:ro
     depends_on:
       - mongo-api
     networks:

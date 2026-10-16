@@ -86,7 +86,6 @@ cython_debug/
 
 # Data files
 *.csv
-*.json
 *.xlsx
 *.xls
 *.tsv

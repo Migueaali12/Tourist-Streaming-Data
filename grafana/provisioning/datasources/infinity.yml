@@ -1,0 +1,14 @@
+apiVersion: 1
+
+# Grafana reads MongoDB through the Express API (mongo-api). No direct DB access, no DB credentials in Grafana.
+datasources:
+  - name: Tourism API
+    uid: infinity-api
+    type: yesoreyeram-infinity-datasource
+    access: proxy
+    url: http://mongo-api:8080
+    isDefault: true
+    editable: true
+    jsonData:
+      authType: none
+      global_queries: []
